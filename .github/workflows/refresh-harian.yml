@@ -1,0 +1,62 @@
+name: Refresh harian
+
+# Tiap pagi: tanya OCP Data Registry apakah ada rilis baru (permintaan bersyarat pakai ETag, beberapa detik).
+# Kalau ada, seluruh pipeline dijalankan ulang dan hasilnya disimpan ke cabang `data`; aplikasi membaca
+# cabang itu lewat raw.githubusercontent.com, jadi data baru tayang tanpa deploy ulang.
+# Kalau gerbang kualitas gagal, job ini merah dan cabang `data` tidak disentuh.
+on:
+  schedule:
+    - cron: "17 23 * * *"   # 23:17 UTC = 06:17 WIB
+  workflow_dispatch:
+    inputs:
+      paksa:
+        description: Bangun ulang walau sumber tidak berubah
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cabang-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ambil status dan manifest run sebelumnya
+        run: |
+          mkdir -p data/mentah lama keluar
+          dasar="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/data"
+          curl -sf "${dasar}/status.json" -o lama/status.json || echo "belum ada status sebelumnya"
+          curl -sf "${dasar}/manifest.json" -o data/mentah/manifest.json || echo "belum ada manifest sebelumnya"
+
+      - name: Tes pipeline sebelum dipakai
+        run: |
+          pip install --quiet -r pipeline/requirements-dev.txt
+          python -m pytest tests/pipeline -q
+
+      - name: Jalankan pipeline
+        run: python -m pipeline.jalankan --keluar keluar --status-lama lama/status.json ${{ inputs.paksa && '--paksa' || '' }}
+
+      - name: Simpan ke cabang data
+        run: |
+          cp data/mentah/manifest.json keluar/manifest.json
+          bash scripts/simpan_cabang_data.sh keluar/*.json
+
+      - name: Ringkasan
+        run: |
+          {
+            echo "### Status"
+            echo '```json'
+            cat keluar/status.json
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
