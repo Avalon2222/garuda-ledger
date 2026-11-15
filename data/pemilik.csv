@@ -1,0 +1,12 @@
+id,nama,jenis,sumber
+negara,Negara Republik Indonesia,negara,https://www.bumn.go.id/
+wika,PT Wijaya Karya (Persero) Tbk,bumn,https://www.wika.co.id/
+kimia-farma,PT Kimia Farma Tbk,bumn,https://www.kimiafarma.co.id/
+indofarma,PT Indofarma Tbk,bumn,https://indofarma.id/
+bio-farma,PT Bio Farma (Persero),bumn,https://www.biofarma.co.id/
+peruri,Perum Peruri,bumn,https://www.peruri.co.id/
+rni,PT Rajawali Nusantara Indonesia (Persero),bumn,https://idfood.co.id/
+kop-ad,Koperasi di lingkungan TNI AD,koperasi,https://tniad.mil.id/
+kop-al,Koperasi di lingkungan TNI AL,koperasi,https://www.tnial.mil.id/
+kop-au,Koperasi di lingkungan TNI AU,koperasi,https://tni-au.mil.id/
+kop-pol,Koperasi di lingkungan Polri,koperasi,https://inkoppol.co.id/
