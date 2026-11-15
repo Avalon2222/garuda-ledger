@@ -24,6 +24,10 @@ for berkas in "$@"; do
   cp "$berkas" "cabang-data/$(basename "$berkas")"
 done
 
+# Cabang ini cuma berisi data, tidak ada yang bisa dibangun. Vercel membaca konfigurasi dari cabang yang
+# sedang di-deploy, jadi larangan build harus ada di sini juga (vercel.json di main saja tidak cukup).
+printf '%s\n' '{ "git": { "deploymentEnabled": false } }' > cabang-data/vercel.json
+
 cd cabang-data
 git add -A
 if git diff --cached --quiet; then
