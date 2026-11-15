@@ -12,7 +12,8 @@
 > 11.593 vendor, 1.943 satker di Kemhan, TNI, Polri, Bakamla, BSSN, BIN, Lemhannas, dan BNPT. Klik satu vendor, lihat
 > siapa pembelinya, berapa nilainya, dan pola statistik apa yang muncul. Semuanya dari data pengadaan terbuka.
 
-**Live:** https://garuda-ledger.vercel.app
+**Live:** segera di https://garuda-ledger.vercel.app (deploy belum jalan; sementara ini jalankan lokal, lihat
+[Menjalankan sendiri](#menjalankan-sendiri))
 
 ![Demo: ikhtisar, cari vendor, pindah ke satker, nyalakan lensa pola, buka panel data dan metode](docs/demo.gif)
 
