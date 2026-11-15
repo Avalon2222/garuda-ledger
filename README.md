@@ -190,7 +190,7 @@ Tes:
 
 ```bash
 pip install -r pipeline/requirements-dev.txt
-python -m pytest tests/pipeline        # 65 tes pipeline, tanpa jaringan
+python -m pytest tests/pipeline        # 75 tes pipeline, tanpa jaringan
 npm test                               # 68 tes unit (vitest), sebagian di atas data sungguhan
 npm run build && npm run test:e2e      # 20 skenario Playwright × 4 ukuran layar (360, 390, 412, 1440 px)
 ```
@@ -198,8 +198,9 @@ npm run build && npm run test:e2e      # 20 skenario Playwright × 4 ukuran laya
 ## Struktur
 
 ```
-pipeline/            ETL Python: ambil, bersihkan, resolusi, pola, kualitas, graf, jalankan
-data/                kurasi tangan (pemilik BUMN) dan catatan sumber; data/mentah/ = cache unduhan (tidak di-commit)
+pipeline/            ETL Python: ambil, bersihkan, resolusi, pola, kualitas, graf, ekspor, jalankan
+data/                kurasi tangan (pemilik BUMN) dan catatan sumber; data/ekspor/ = ringkasan CSV per vendor, satker,
+                     dan tahun; data/mentah/ = cache unduhan (tidak di-commit)
 public/data/         ledger.json + status.json bawaan build
 src/lib/             model data, agregasi, pembangun graf, tata letak, pelukis kanvas, kamera, URL, pencarian
 src/components/      Konsol, GrafKanvas, Berkas, PanelSaring, Linimasa, Pencarian, PanelMetode

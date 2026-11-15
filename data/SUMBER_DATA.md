@@ -53,6 +53,32 @@ namanya. Kelompok ini bukan badan hukum dan bukan pemilik: koperasi dimiliki ang
 
 Data pemilik manfaat perusahaan swasta tidak tersedia sebagai data terbuka di Indonesia, jadi tidak dimuat.
 
+## Ringkasan CSV (`data/ekspor/`)
+
+`ledger.json` berbentuk kolom dan dibuat untuk aplikasi graf. Untuk dipakai alat lain (spreadsheet, notebook,
+chatbot), pipeline bisa menulis tiga tabel agregat datar:
+
+| Berkas | Satu baris per | Baris | Kolom penting |
+|---|---|---|---|
+| `vendor.csv` | vendor | 11.593 | `paket`, `nilai`, `satker` (jumlah satker pembeli), `unit_utama`, `tahun_awal`, `tahun_akhir`, `median_rasio_hps` |
+| `satker.csv` | satuan kerja | 1.943 | `paket`, `nilai`, `vendor` (jumlah pemenang), `hhi`, `vendor_terbesar`, `porsi_vendor_terbesar` |
+| `tahunan.csv` | tahun × instansi × jenis pengadaan | 224 | `paket`, `nilai`, `vendor`, `median_rasio_hps` |
+
+Yang perlu diketahui sebelum memakainya:
+
+- `nilai` adalah rupiah bulat yang dijumlahkan per paket, sama seperti di `ledger.json`. Total ketiga tabel cocok
+  persis dengan total di aplikasi (diuji di `tests/pipeline/test_muat.py`).
+- Kolom `mepet_hps`, `langganan`, dan `pola_ganda` adalah **hitungan paket** menurut definisi statistik di README.
+  Angka itu bukan indikasi pelanggaran; banyak pola punya penjelasan yang wajar.
+- Vendor bernama sama di daerah berbeda sengaja tetap dua baris (lihat aturan entity resolution). Kolom
+  `unit_utama` membedakannya.
+- Berkas ini **tidak** ikut refresh harian. Job harian hanya mendorong JSON ke cabang `data`; CSV di sini dibuat
+  ulang dengan perintah di bawah lalu di-commit:
+
+```bash
+python -m pipeline.jalankan --paksa --ekspor data/ekspor
+```
+
 ## Sumber yang dicoba tapi tidak dipakai
 
 | Sumber | Kenapa tidak |

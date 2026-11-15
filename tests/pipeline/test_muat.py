@@ -200,3 +200,39 @@ def test_pipeline_menolak_data_yang_menyusut(tmp_path, capsys):
     assert jalankan.main(argumen) == 1
     assert (keluar / "ledger.json").read_bytes() == sebelum  # keluaran lama tidak ditimpa
     assert "gerbang kualitas gagal" in capsys.readouterr().err
+
+
+def _baca_csv(jalur):
+    import csv
+    with open(jalur, encoding="utf-8", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def test_ekspor_ditulis_hanya_kalau_diminta_dan_cocok_dengan_ledger(tmp_path):
+    mentah, keluar, folder = tmp_path / "mentah", tmp_path / "keluar", tmp_path / "ekspor"
+    tulis_sumber(mentah, bahan(1200))
+    dasar = ["--mentah", str(mentah), "--kurasi", str(tmp_path), "--keluar", str(keluar), "--tanpa-unduh"]
+
+    assert jalankan.main(dasar) == 0
+    assert not list(tmp_path.rglob("*.csv"))                  # tanpa --ekspor tidak ada CSV yang ditulis di mana pun
+
+    assert jalankan.main(dasar + ["--ekspor", str(folder)]) == 0
+    assert sorted(p.name for p in folder.glob("*.csv")) == ["satker.csv", "tahunan.csv", "vendor.csv"]
+    status = json.loads((keluar / "status.json").read_text(encoding="utf-8"))
+    vendor, satker, tahunan = (_baca_csv(folder / f"{n}.csv") for n in ("vendor", "satker", "tahunan"))
+    assert len(vendor) == status["vendor"]
+    for tabel in (vendor, satker, tahunan):                   # tiga tabel dan ledger harus menjumlah ke angka yang sama
+        assert sum(int(b["nilai"]) for b in tabel) == status["nilai"]
+        assert sum(int(b["paket"]) for b in tabel) == status["tender"]
+
+
+def test_ekspor_tidak_ditimpa_kalau_gerbang_gagal(tmp_path):
+    mentah, keluar, folder = tmp_path / "mentah", tmp_path / "keluar", tmp_path / "ekspor"
+    tulis_sumber(mentah, bahan(2000))
+    argumen = ["--mentah", str(mentah), "--kurasi", str(tmp_path), "--keluar", str(keluar), "--tanpa-unduh", "--ekspor", str(folder)]
+    assert jalankan.main(argumen) == 0
+    sebelum = (folder / "vendor.csv").read_bytes()
+
+    tulis_sumber(mentah, bahan(1100))
+    assert jalankan.main(argumen) == 1
+    assert (folder / "vendor.csv").read_bytes() == sebelum

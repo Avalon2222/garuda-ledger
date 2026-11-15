@@ -17,7 +17,7 @@ from datetime import date, datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from . import ambil, bersihkan, graf, kualitas, pola, resolusi
+from . import ambil, bersihkan, ekspor, graf, kualitas, pola, resolusi
 from .konfigurasi import TAHUN_MAKS_TAMBAH, URL_REGISTRI
 
 AKAR = Path(__file__).resolve().parent.parent
@@ -38,7 +38,7 @@ def _sumber_diubah(berkas: dict[int, ambil.Berkas]) -> str:
     return max(waktu).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") if waktu else ""
 
 
-def bangun(mentah: Path, kurasi: Path, berkas: dict[int, ambil.Berkas], tender_sebelumnya: int | None = None) -> tuple[dict, list[kualitas.Periksa]]:
+def bangun(mentah: Path, kurasi: Path, berkas: dict[int, ambil.Berkas], tender_sebelumnya: int | None = None) -> tuple[dict, list[kualitas.Periksa], dict[str, list[dict]]]:
     """Jalankan semua tahap transform di atas berkas yang sudah ada di folder `mentah`."""
     lama: dict[str, float] = {}
 
@@ -91,7 +91,7 @@ def bangun(mentah: Path, kurasi: Path, berkas: dict[int, ambil.Berkas], tender_s
     }
     isi = graf.susun(tender, hasil, meta, kurasi)
     isi["meta"]["sidik"] = graf.sidik(isi)
-    return isi, cek
+    return isi, cek, ekspor.tabel(tender, hasil.vendor)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -99,6 +99,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--mentah", type=Path, default=AKAR / "data" / "mentah", help="folder cache berkas sumber")
     p.add_argument("--kurasi", type=Path, default=AKAR / "data", help="folder CSV kurasi (pemilik)")
     p.add_argument("--keluar", type=Path, default=AKAR / "public" / "data", help="folder keluaran")
+    p.add_argument("--ekspor", type=Path, help="kalau diisi, tulis juga ringkasan CSV (vendor, satker, tahunan) ke folder ini")
     p.add_argument("--status-lama", type=Path, help="status.json dari run sebelumnya (untuk gerbang 'tidak menyusut')")
     p.add_argument("--tanpa-unduh", action="store_true", help="jangan hubungi registri, pakai cache apa adanya")
     p.add_argument("--paksa", action="store_true", help="bangun ulang walau tidak ada berkas sumber yang berubah")
@@ -129,7 +130,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not a.tanpa_unduh:
         berkas = ambil.lengkapi(a.mentah, berkas)
-    isi, cek = bangun(a.mentah, a.kurasi, berkas, status_lama.get("tender"))
+    isi, cek, ringkasan = bangun(a.mentah, a.kurasi, berkas, status_lama.get("tender"))
     for c in cek:
         print(f"  [{'ok' if c.lulus else 'GAGAL'}] {c.nama}: {c.nilai} (batas {c.batas})")
     if not kualitas.lulus_semua(cek):
@@ -151,6 +152,9 @@ def main(argv: list[str] | None = None) -> int:
     (a.keluar / "status.json").write_text(json.dumps(status, indent=2), encoding="utf-8")
     print(f"selesai: {status['tender']} tender, {status['vendor']} vendor, sidik {status['sidik']}, berubah={berubah}")
     print(json.dumps(isi["meta"]["tahap"], ensure_ascii=False))
+    if a.ekspor:
+        for jalur in ekspor.tulis(ringkasan, a.ekspor):
+            print(f"ekspor: {jalur}")
     return 0
 
 
