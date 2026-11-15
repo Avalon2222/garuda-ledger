@@ -190,7 +190,7 @@ Tes:
 
 ```bash
 pip install -r pipeline/requirements-dev.txt
-python -m pytest tests/pipeline        # 62 tes pipeline, tanpa jaringan
+python -m pytest tests/pipeline        # 65 tes pipeline, tanpa jaringan
 npm test                               # 68 tes unit (vitest), sebagian di atas data sungguhan
 npm run build && npm run test:e2e      # 20 skenario Playwright × 4 ukuran layar (360, 390, 412, 1440 px)
 ```

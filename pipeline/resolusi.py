@@ -131,6 +131,15 @@ class HasilResolusi:
     statistik: dict[str, int]
 
 
+def teratas(hitung: Counter) -> list[tuple[str, int]]:
+    """Isi Counter dari yang terbanyak; yang jumlahnya seri diurutkan menurut abjad.
+
+    Counter.most_common() membiarkan yang seri mengikuti urutan masuk. Di sini urutan masuk berasal dari set,
+    jadi berubah tiap proses (hash string diacak) dan sidik keluaran ikut berubah walau datanya sama.
+    """
+    return sorted(hitung.items(), key=lambda kv: (-kv[1], kv[0]))
+
+
 def _bentuk_cocok(a: str, b: str) -> bool:
     return a == b or not a or not b
 
@@ -206,8 +215,10 @@ def selesaikan(catatan: list[tuple[str, str, str]]) -> HasilResolusi:
         inti = Counter()
         for c in anggota:
             inti[bersih[c].inti] += kemunculan[c]
-        bentuk_utama = bentuk.most_common(1)[0][0] if bentuk else ""
-        nama = nama_tampil(inti.most_common(1)[0][0], bentuk_utama)
+        bentuk_utama = teratas(bentuk)[0][0] if bentuk else ""
+        # untuk nama tampil, ejaan yang seri dimenangkan yang paling rapat: "DIANA" lebih layak dari "D I A N A"
+        inti_utama = min(inti.items(), key=lambda kv: (-kv[1], kv[0].count(" "), kv[0]))[0]
+        nama = nama_tampil(inti_utama, bentuk_utama)
         ejaan = Counter()
         for c in anggota:
             ejaan[c[1]] += kemunculan[c]
@@ -216,7 +227,7 @@ def selesaikan(catatan: list[tuple[str, str, str]]) -> HasilResolusi:
             id=vid,
             nama=nama,
             bentuk=bentuk_utama,
-            alias=[e for e, _ in ejaan.most_common() if e != nama][:8],
+            alias=[e for e, _ in teratas(ejaan) if e != nama][:8],
             id_sumber=sorted({c[0] for c in anggota if c[0]})[:12],
             bukti=bukti,
         )

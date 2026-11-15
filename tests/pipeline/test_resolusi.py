@@ -111,3 +111,40 @@ def test_jarak_sunting(a, b, harap):
 
 def test_kandidat_mirip_mengabaikan_nama_pendek():
     assert hitung_kandidat_mirip([bersihkan_nama("PT ABADI"), bersihkan_nama("PT ABADY")]) == 0
+
+
+def test_ejaan_yang_seri_diurutkan_abjad_bukan_urutan_masuk():
+    data = [("5-1", "CV. SUMBER REJEKI", "568"), ("5-1", "CV. SUMBER REJEKI", "568"),
+            ("6-1", "SUMBER REJEKI", "568"), ("7-1", "CV. Sumber Rejeki", "568")]
+    for urutan in (data, list(reversed(data)), [data[2], data[0], data[3], data[1]]):
+        v = next(iter(selesaikan(urutan).vendor.values()))
+        assert v.alias == ["CV. SUMBER REJEKI", "CV. Sumber Rejeki", "SUMBER REJEKI"]
+
+
+def test_hasil_resolusi_sama_persis_apa_pun_urutan_masukannya():
+    """Bukan cuma nama: alias, ID sumber, bukti, dan peta harus identik, karena semuanya masuk ke sidik."""
+    import random
+    from dataclasses import asdict
+
+    data = []
+    for i in range(60):
+        lpse = ["638", "588", "44"][i % 3]
+        data += [(f"{i}{lpse}-1", f"PT. MITRA {i % 20:02d} JAYA", lpse), (f"{i}{lpse}-1", f"MITRA {i % 20:02d} JAYA, PT", lpse),
+                 (f"c{i}-1", f"CV. KARYA {i % 7}", lpse), (f"c{i}-2", f"cv.karya {i % 7}", lpse), (f"c{i}-3", f"KARYA {i % 7}", lpse)]
+    acuan = selesaikan(data)
+    for benih in range(5):
+        acak = data[:]
+        random.Random(benih).shuffle(acak)
+        hasil = selesaikan(acak)
+        assert {k: asdict(v) for k, v in hasil.vendor.items()} == {k: asdict(v) for k, v in acuan.vendor.items()}
+        assert hasil.peta == acuan.peta and hasil.statistik == acuan.statistik
+
+
+def test_nama_tampil_yang_seri_memilih_ejaan_paling_rapat():
+    data = [("1-1", "CV. D I A N A", "568"), ("2-1", "CV. DIANA", "568")]
+    for urutan in (data, list(reversed(data))):
+        v = next(iter(selesaikan(urutan).vendor.values()))
+        assert v.nama == "CV Diana"
+    # yang lebih sering muncul tetap menang walau ejaannya renggang
+    sering = [("1-1", "CV. D I A N A", "568")] * 3 + [("2-1", "CV. DIANA", "568")]
+    assert next(iter(selesaikan(sering).vendor.values())).nama == "CV D I A N A"
